@@ -203,13 +203,17 @@ func (app *BaseApp) EndBlock(req abci.RequestEndBlock) (res abci.ResponseEndBloc
 	}
 
 	if app.endBlocker != nil {
-		res = app.endBlocker(app.deliverState.ctx, req)
+		// Propagate the event history.
+		em := sdk.NewEventManagerWithHistory(app.deliverState.eventHistory)
+		res = app.endBlocker(app.deliverState.ctx.WithEventManager(em), req)
 		res.Events = sdk.MarkEventsToIndex(res.Events, app.indexEvents)
 	}
 
 	if cp := app.GetConsensusParams(app.deliverState.ctx); cp != nil {
 		res.ConsensusParamUpdates = cp
 	}
+
+	app.deliverState.eventHistory = []abci.Event{}
 
 	// call the streaming service hooks with the EndBlock messages
 	for _, streamingListener := range app.abciListeners {
@@ -286,12 +290,14 @@ func (app *BaseApp) DeliverTx(req abci.RequestDeliverTx) (res abci.ResponseDeliv
 		return sdkerrors.ResponseDeliverTxWithEvents(err, gInfo.GasWanted, gInfo.GasUsed, sdk.MarkEventsToIndex(anteEvents, app.indexEvents), app.trace)
 	}
 
+	events := sdk.MarkEventsToIndex(result.Events, app.indexEvents)
+	app.deliverState.eventHistory = append(app.deliverState.eventHistory, events...)
 	return abci.ResponseDeliverTx{
 		GasWanted: int64(gInfo.GasWanted), // TODO: Should type accept unsigned ints?
 		GasUsed:   int64(gInfo.GasUsed),   // TODO: Should type accept unsigned ints?
 		Log:       result.Log,
 		Data:      result.Data,
-		Events:    sdk.MarkEventsToIndex(result.Events, app.indexEvents),
+		Events:    events,
 	}
 }
 
@@ -303,6 +309,22 @@ func (app *BaseApp) DeliverTx(req abci.RequestDeliverTx) (res abci.ResponseDeliv
 // against that height and gracefully halt if it matches the latest committed
 // height.
 func (app *BaseApp) Commit() abci.ResponseCommit {
+	res, snapshotHeight := app.CommitWithoutSnapshot()
+
+	if snapshotHeight > 0 {
+		if app.snapshotManager == nil {
+			panic("snapshot manager not configured")
+		}
+		go app.snapshotManager.SnapshotIfApplicable(snapshotHeight)
+	}
+
+	return res
+}
+
+// CommitWithoutSnapshot is like Commit but instead of starting the snapshot goroutine
+// it returns a positive snapshot height.
+// It can be used by apps to synchronize snapshots according to their requirements.
+func (app *BaseApp) CommitWithoutSnapshot() (abci.ResponseCommit, int64) {
 	header := app.deliverState.ctx.BlockHeader()
 	retainHeight := app.GetBlockRetentionHeight(header.Height)
 
@@ -353,9 +375,7 @@ func (app *BaseApp) Commit() abci.ResponseCommit {
 		app.halt()
 	}
 
-	go app.snapshotManager.SnapshotIfApplicable(header.Height)
-
-	return res
+	return res, header.Height
 }
 
 // halt attempts to gracefully shutdown the node via SIGINT and SIGTERM falling
@@ -392,8 +412,18 @@ func (app *BaseApp) Query(req abci.RequestQuery) (res abci.ResponseQuery) {
 	}()
 
 	// when a client did not provide a query height, manually inject the latest
+	lastHeight := app.LastBlockHeight()
 	if req.Height == 0 {
-		req.Height = app.LastBlockHeight()
+		req.Height = lastHeight
+	}
+	if req.Height > lastHeight {
+		return sdkerrors.QueryResult(
+			sdkerrors.Wrapf(
+				sdkerrors.ErrInvalidHeight,
+				"given height %d is greater than latest height %d",
+				req.Height, lastHeight,
+			),
+		)
 	}
 
 	telemetry.IncrCounter(1, "query", "count")
