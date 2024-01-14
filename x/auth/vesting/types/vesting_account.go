@@ -196,8 +196,8 @@ func (bva BaseVestingAccount) MarshalYAML() (interface{}, error) {
 // Continuous Vesting Account
 
 var (
-	_ vestexported.VestingAccount  = (*ContinuousVestingAccount)(nil)
-	_ authtypes.GenesisAccount = (*ContinuousVestingAccount)(nil)
+	_ vestexported.VestingAccount = (*ContinuousVestingAccount)(nil)
+	_ authtypes.GenesisAccount    = (*ContinuousVestingAccount)(nil)
 )
 
 // NewContinuousVestingAccountRaw creates a new ContinuousVestingAccount object from BaseVestingAccount
@@ -312,8 +312,8 @@ func (cva ContinuousVestingAccount) MarshalYAML() (interface{}, error) {
 // Periodic Vesting Account
 
 var (
-	_ vestexported.VestingAccount  = (*PeriodicVestingAccount)(nil)
-	_ authtypes.GenesisAccount = (*PeriodicVestingAccount)(nil)
+	_ vestexported.VestingAccount = (*PeriodicVestingAccount)(nil)
+	_ authtypes.GenesisAccount    = (*PeriodicVestingAccount)(nil)
 )
 
 // NewPeriodicVestingAccountRaw creates a new PeriodicVestingAccount object from BaseVestingAccount
@@ -507,8 +507,8 @@ func (pva *PeriodicVestingAccount) addGrant(ctx sdk.Context, sk StakingKeeper, g
 // Delayed Vesting Account
 
 var (
-	_ vestexported.VestingAccount  = (*DelayedVestingAccount)(nil)
-	_ authtypes.GenesisAccount = (*DelayedVestingAccount)(nil)
+	_ vestexported.VestingAccount = (*DelayedVestingAccount)(nil)
+	_ authtypes.GenesisAccount    = (*DelayedVestingAccount)(nil)
 )
 
 // NewDelayedVestingAccountRaw creates a new DelayedVestingAccount object from BaseVestingAccount
@@ -577,8 +577,8 @@ func (dva DelayedVestingAccount) String() string {
 // Permanent Locked Vesting Account
 
 var (
-	_ vestexported.VestingAccount  = (*PermanentLockedAccount)(nil)
-	_ authtypes.GenesisAccount = (*PermanentLockedAccount)(nil)
+	_ vestexported.VestingAccount = (*PermanentLockedAccount)(nil)
+	_ authtypes.GenesisAccount    = (*PermanentLockedAccount)(nil)
 )
 
 // NewPermanentLockedAccount returns a PermanentLockedAccount
@@ -665,7 +665,7 @@ func marshalYaml(i interface{}) (interface{}, error) {
 
 var (
 	_ vestexported.VestingAccount          = (*ClawbackVestingAccount)(nil)
-	_ authtypes.GenesisAccount         = (*ClawbackVestingAccount)(nil)
+	_ authtypes.GenesisAccount             = (*ClawbackVestingAccount)(nil)
 	_ vestexported.ClawbackVestingAccountI = (*ClawbackVestingAccount)(nil)
 )
 
@@ -974,7 +974,7 @@ func (va *ClawbackVestingAccount) updateDelegation(encumbered, toClawBack, bonde
 	slashed := oldDelegated.Sub(coinsMin(delegated, oldDelegated)...)
 	total := delegated.Add(unbonded...)
 	toClawBack = coinsMin(toClawBack, total) // might have been slashed
-	newDelegated := coinsMin(delegated, total.Sub(toClawBack)...).Add(slashed...)
+	newDelegated := coinsMin(delegated, total.Sub(toClawBack...)).Add(slashed...)
 	va.DelegatedVesting = coinsMin(encumbered, newDelegated)
 	va.DelegatedFree = newDelegated.Sub(va.DelegatedVesting...)
 	return toClawBack
@@ -1289,7 +1289,7 @@ func (va ClawbackVestingAccount) distributeReward(ctx sdk.Context, ak AccountKee
 	for i := firstUnvestedPeriod; i < len(va.VestingPeriods); i++ {
 		period := va.VestingPeriods[i]
 		runningTotStaking = runningTotStaking.Add(period.Amount.AmountOf(bondDenom))
-		runningTotRatio := runningTotStaking.ToDec().Quo(unvestedTokens.ToDec())
+		runningTotRatio := sdk.NewDecFromInt(runningTotStaking).Quo(sdk.NewDecFromInt(unvestedTokens))
 		targetCoins := scaleCoins(reward, runningTotRatio)
 		thisReward := targetCoins.Sub(runningTotReward...)
 		runningTotReward = targetCoins
@@ -1305,7 +1305,7 @@ func (va ClawbackVestingAccount) distributeReward(ctx sdk.Context, ak AccountKee
 func scaleCoins(coins sdk.Coins, scale sdk.Dec) sdk.Coins {
 	scaledCoins := sdk.NewCoins()
 	for _, coin := range coins {
-		amt := coin.Amount.ToDec().Mul(scale).TruncateInt() // round down
+		amt := sdk.NewDecFromInt(coin.Amount).Mul(scale).TruncateInt() // round down
 		scaledCoins = scaledCoins.Add(sdk.NewCoin(coin.Denom, amt))
 	}
 	return scaledCoins
@@ -1391,7 +1391,7 @@ func (va ClawbackVestingAccount) postReward(ctx sdk.Context, reward sdk.Coins, a
 		va.distributeReward(ctx, ak, bondDenom, reward)
 		return
 	}
-	unvestedRatio := unvested.ToDec().QuoTruncate(bonded.ToDec()) // round down
+	unvestedRatio := sdk.NewDecFromInt(unvested).QuoTruncate(sdk.NewDecFromInt(bonded)) // round down
 	unvestedReward := scaleCoins(reward, unvestedRatio)
 	va.distributeReward(ctx, ak, bondDenom, unvestedReward)
 }

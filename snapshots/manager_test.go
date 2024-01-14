@@ -73,7 +73,7 @@ func TestManager_Take(t *testing.T) {
 	}
 	extSnapshotter := newExtSnapshotter(10)
 
-	expectChunks := snapshotItems(items)
+	expectChunks := snapshotItems(items, extSnapshotter)
 	manager := snapshots.NewManager(store, opts, snapshotter, nil, log.NewNopLogger())
 	err := manager.RegisterExtensions(extSnapshotter)
 	require.NoError(t, err)
@@ -140,7 +140,10 @@ func TestManager_Restore(t *testing.T) {
 	target := &mockSnapshotter{
 		prunedHeights: make(map[int64]struct{}),
 	}
+	extSnapshotter := newExtSnapshotter(0)
 	manager := snapshots.NewManager(store, opts, target, nil, log.NewNopLogger())
+	err := manager.RegisterExtensions(extSnapshotter)
+	require.NoError(t, err)
 
 	expectItems := [][]byte{
 		{1, 2, 3},
@@ -250,7 +253,7 @@ func TestManager_RestoreLargeItem(t *testing.T) {
 	store := setupStore(t)
 	target := &mockSnapshotter{}
 	extSnapshotter := newExtSnapshotter(0)
-	manager := snapshots.NewManager(store, target)
+	manager := snapshots.NewManager(store, opts, target, nil, log.NewNopLogger())
 	err := manager.RegisterExtensions(extSnapshotter)
 	require.NoError(t, err)
 
@@ -298,7 +301,7 @@ func TestManager_CannotRestoreTooLargeItem(t *testing.T) {
 	store := setupStore(t)
 	target := &mockSnapshotter{}
 	extSnapshotter := newExtSnapshotter(0)
-	manager := snapshots.NewManager(store, target)
+	manager := snapshots.NewManager(store, opts, target, nil, log.NewNopLogger())
 	err := manager.RegisterExtensions(extSnapshotter)
 	require.NoError(t, err)
 

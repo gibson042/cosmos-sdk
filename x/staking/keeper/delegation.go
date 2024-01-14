@@ -3,7 +3,7 @@ package keeper
 import (
 	"bytes"
 	"fmt"
-	"math"
+	stdmath "math"
 	"time"
 
 	"cosmossdk.io/math"
@@ -776,7 +776,7 @@ func (k Keeper) TransferDelegation(ctx sdk.Context, fromAddr, toAddr sdk.AccAddr
 	// keeping a liability for 25 shares and transferring one for 75 shares.
 	// Of course, the redelegations themselves can have multiple entries for
 	// different timestamps, so we're actually working at a finer granularity.
-	redelegations := k.GetRedelegations(ctx, fromAddr, math.MaxUint16)
+	redelegations := k.GetRedelegations(ctx, fromAddr, stdmath.MaxUint16)
 	for _, redelegation := range redelegations {
 		// There's no redelegation index by delegator and dstVal or vice-versa.
 		// The minimum cardinality is to look up by delegator, so scan and skip.

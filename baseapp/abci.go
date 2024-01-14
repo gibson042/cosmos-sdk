@@ -423,6 +423,7 @@ func (app *BaseApp) Query(req abci.RequestQuery) (res abci.ResponseQuery) {
 				"given height %d is greater than latest height %d",
 				req.Height, lastHeight,
 			),
+			app.trace,
 		)
 	}
 

@@ -417,7 +417,9 @@ func (s *IntegrationTestSuite) TestNewMsgReturnGrantsCmd() {
 	info, _, err := val.ClientCtx.Keyring.NewMnemonic("NewClawback", keyring.English, sdk.FullFundraiserPath, keyring.DefaultBIP39Passphrase, hd.Secp256k1)
 	s.Require().NoError(err)
 
-	addr := sdk.AccAddress(info.GetPubKey().Address())
+	pubKey, err := info.GetPubKey()
+	s.Require().NoError(err)
+	addr := sdk.AccAddress(pubKey.Address())
 
 	_, err = clitestutil.ExecTestCLICmd(val.ClientCtx, cli.NewMsgCreateClawbackVestingAccountCmd(), []string{
 		addr.String(),

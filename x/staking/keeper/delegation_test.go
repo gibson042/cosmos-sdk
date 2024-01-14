@@ -146,7 +146,7 @@ func TestDelegation(t *testing.T) {
 }
 
 func TestTransferDelegation(t *testing.T) {
-	_, app, ctx := createTestInput()
+	_, app, ctx := createTestInput(t)
 
 	addrDels := simapp.AddTestAddrsIncremental(app, ctx, 3, sdk.NewInt(10000))
 	valAddrs := simapp.ConvertAddrsToValAddrs(addrDels)
@@ -291,7 +291,7 @@ func TestUnbondingDelegation(t *testing.T) {
 }
 
 func TestTransferUnbonding(t *testing.T) {
-	_, app, ctx := createTestInput()
+	_, app, ctx := createTestInput(t)
 
 	delAddrs := simapp.AddTestAddrsIncremental(app, ctx, 2, sdk.NewInt(10000))
 	valAddrs := simapp.ConvertAddrsToValAddrs(delAddrs)
