@@ -312,9 +312,6 @@ func (app *BaseApp) Commit() abci.ResponseCommit {
 	res, snapshotHeight := app.CommitWithoutSnapshot()
 
 	if snapshotHeight > 0 {
-		if app.snapshotManager == nil {
-			panic("snapshot manager not configured")
-		}
 		go app.snapshotManager.SnapshotIfApplicable(snapshotHeight)
 	}
 
