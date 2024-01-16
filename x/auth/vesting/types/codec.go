@@ -23,8 +23,9 @@ func RegisterLegacyAminoCodec(cdc *codec.LegacyAmino) {
 	cdc.RegisterConcrete(&PeriodicVestingAccount{}, "cosmos-sdk/PeriodicVestingAccount", nil)
 	cdc.RegisterConcrete(&PermanentLockedAccount{}, "cosmos-sdk/PermanentLockedAccount", nil)
 	legacy.RegisterAminoMsg(cdc, &MsgClawback{}, "cosmos-sdk/MsgClawback")
-	legacy.RegisterAminoMsg(cdc, &MsgCreateClawbackVestingAccount{}, "cosmos-sdk/MsgCreateClawbackVestingAccount")
-	legacy.RegisterAminoMsg(cdc, &MsgCreatePeriodicVestingAccount{}, "cosmos-sdk/MsgCreatePeriodicVestingAccount")
+	// msgName needs to be 39 chars or less, but only needs to be unique - abbreviate next two
+	legacy.RegisterAminoMsg(cdc, &MsgCreateClawbackVestingAccount{}, "cosmos-sdk/MsgCreateClawbackVestingAcc")
+	legacy.RegisterAminoMsg(cdc, &MsgCreatePeriodicVestingAccount{}, "cosmos-sdk/MsgCreatePeriodicVestingAcc")
 	legacy.RegisterAminoMsg(cdc, &MsgCreatePermanentLockedAccount{}, "cosmos-sdk/MsgCreatePermLockedAccount")
 	legacy.RegisterAminoMsg(cdc, &MsgCreateVestingAccount{}, "cosmos-sdk/MsgCreateVestingAccount")
 	legacy.RegisterAminoMsg(cdc, &MsgReturnGrants{}, "cosmos-sdk/MsgReturnGrants")
