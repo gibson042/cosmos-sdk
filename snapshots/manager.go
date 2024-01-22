@@ -517,7 +517,7 @@ func (m *Manager) SnapshotIfApplicable(height int64) {
 		m.logger.Debug("snapshot is skipped", "height", height)
 		return
 	}
-	m.snapshot(height)
+	m.Snapshot(height)
 }
 
 // shouldTakeSnapshot returns true is snapshot should be taken at height.
@@ -525,7 +525,9 @@ func (m *Manager) shouldTakeSnapshot(height int64) bool {
 	return m.opts.Interval > 0 && uint64(height)%m.opts.Interval == 0
 }
 
-func (m *Manager) snapshot(height int64) {
+// Snapshot taks a snapshot of the current state and prunes any old snapshottypes.
+// It should be started as a goroutine
+func (m *Manager) Snapshot(height int64) {
 	m.logger.Info("creating state snapshot", "height", height)
 
 	if height <= 0 {

@@ -397,6 +397,16 @@ func (app *BaseApp) halt() {
 	os.Exit(0)
 }
 
+// Snapshot takes a snapshot of the current state and prunes any old snapshottypes.
+// It should be started as a goroutine
+func (app *BaseApp) Snapshot(height int64) {
+	if app.snapshotManager == nil {
+		app.logger.Info("snapshot manager not configured")
+		return
+	}
+	app.snapshotManager.Snapshot(height)
+}
+
 // Query implements the ABCI interface. It delegates to CommitMultiStore if it
 // implements Queryable.
 func (app *BaseApp) Query(req abci.RequestQuery) (res abci.ResponseQuery) {
