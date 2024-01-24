@@ -513,15 +513,15 @@ func (m *Manager) SnapshotIfApplicable(height int64) {
 	if m == nil {
 		return
 	}
-	if !m.shouldTakeSnapshot(height) {
+	if !m.ShouldTakeSnapshot(height) {
 		m.logger.Debug("snapshot is skipped", "height", height)
 		return
 	}
 	m.Snapshot(height)
 }
 
-// shouldTakeSnapshot returns true is snapshot should be taken at height.
-func (m *Manager) shouldTakeSnapshot(height int64) bool {
+// ShouldTakeSnapshot returns true if a snapshot should be taken at height.
+func (m *Manager) ShouldTakeSnapshot(height int64) bool {
 	return m.opts.Interval > 0 && uint64(height)%m.opts.Interval == 0
 }
 
